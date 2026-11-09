@@ -1,0 +1,17 @@
+Educational exhaustive stuck-at pattern generation
+Fault site: internal node n0 = q[0] AND q[1]
+Propagation: next[0] = (n0 XOR q[2]) AND q[3]
+Tested fault universe: 2 single stuck-at faults ONLY
+
+SA0: 32 detecting patterns / 256
+  first pattern: 00001011 (0x0B)
+  good capture:  01001001 (0x49)
+  faulty capture:01001000 (0x48)
+
+SA1: 96 detecting patterns / 256
+  first pattern: 00001000 (0x08)
+  good capture:  00001010 (0x0A)
+  faulty capture:00001011 (0x0B)
+
+Coverage of the TWO MODELED faults: 100.0%
+Not whole-circuit stuck-at fault coverage.

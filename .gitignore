@@ -1,0 +1,13 @@
+.Xil/
+*.jou
+*.log
+*.wdb
+*.pb
+*.str
+*.cache/
+*.runs/
+*.sim/
+*.gen/
+*.ip_user_files/
+*.xpr
+__pycache__/
