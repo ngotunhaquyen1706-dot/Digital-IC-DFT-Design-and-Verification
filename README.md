@@ -1,59 +1,145 @@
-# DFT Internship Labs — Vivado 2022.2 + Python
+# Digital IC DFT Design and Verification
 
-**Mục tiêu:** Từ Scan DFF đến Scan-based fault test, ATPG đơn giản, JTAG TAP FSM, và Tcl automation.
-Đây là bài tập tự học để chuẩn bị cho DFT internship. **Không phải luồng TestMAX**, không thực hiện automatic scan insertion, DFT DRC, production ATPG, hay JTAG IEEE 1149.1 đầy đủ.
+**Verilog · Vivado 2022.2 (XSim) · Python · Tcl**
 
-## Lộ trình
+An educational, RTL-level project exploring the fundamentals of **Design for Testability (DFT)** through scan chains, scan-based fault testing, basic test-pattern generation, a JTAG TAP controller model, and Vivado scripting.
 
-| Lab | Kỹ năng | File chính | Kết quả cần tự chạy |
-|---|---|---|---|
-| 01 | Scan DFF, Scan Chain, self-checking testbench | `lab01_scan_basics/` | Các bài test reset / capture / shift PASS |
-| 02 | Scan-in -> functional capture -> scan-out, stuck-at-0/1, simple ATPG | `lab02_scan_atpg/` | `ALL LAB02 TESTS PASSED` và report Python |
-| 03 | JTAG TAP 16 states (educational), IR/DR/BYPASS | `lab03_jtag_tap/` | `ALL LAB03 TESTS PASSED` |
-| 04 | Python, Vivado Tcl automation, Linux Shell | `vivado_tcl/` | Chạy mô phỏng tự động qua Tcl console |
+The goal is to understand how internal flip-flop states can be controlled and observed, how stuck-at faults can be activated and propagated, and how simulation tasks can be automated.
 
-## Lab 02 — Bắt đầu ở đây
+> **Scope:** This is a learning project, **not** a production DFT flow. It does not use Synopsys TestMAX, perform automatic scan insertion or DFT DRC, generate production ATPG patterns, or implement a fully IEEE 1149.1-compliant boundary-scan device.
 
-1. Mở Vivado 2022.2 -> Create Project -> RTL Project. Không cần FPGA thật.
-2. `Add Sources > Design Sources`: `lab02_scan_atpg/rtl/scan_dff.v`, `lab02_scan_atpg/rtl/scan_logic8.v`.
-3. `Add Sources > Simulation Sources`: `lab02_scan_atpg/tb/tb_scan_logic8.v`.
-4. Chọn testbench `tb_scan_logic8` làm Simulation Top.
-5. Run Simulation -> Run Behavioral Simulation -> Run All.
-6. Quan sát các tín hiệu `scan_en`, `scan_in`, `scan_state`, `scan_out`, `fault_mode`, `functional_next`.
-7. Xem transcript: case 1 mạch tốt; case 2 lỗi stuck-at-0 bị phát hiện; case 3 stuck-at-1 bị phát hiện; case 4-5 mẫu kiểm thử không phát hiện lỗi (bị mask).
-8. Chạy `python lab02_scan_atpg/scripts/atpg_stuck_at.py` bằng PowerShell/Terminal. File `atpg_report.txt` được tạo cạnh script.
+## Project modules
 
-**Vì sao 0x0B?** Bit 0, 1, 3 bằng 1 nên n0=q0&q1=1, và q3=1 cho lỗi đi tới next_state[0]. Nếu ép n0=0, bit kết quả sẽ khác: stuck-at-0 bị phát hiện.
+| Lab | Focus | Implementation |
+| --- | --- | --- |
+| **01 — Scan Chain** | Scan DFF and serial shifting | An 8-bit scan chain with functional capture, shift-in/shift-out, asynchronous reset, and a self-checking Verilog testbench |
+| **02 — Scan-Based Fault Testing** | Stuck-at faults and basic ATPG | An 8-bit sequential logic block with scan access, simulated stuck-at-0/1 faults at one internal node, a self-checking testbench, and a Python exhaustive pattern search |
+| **03 — JTAG TAP** | JTAG fundamentals | An educational 16-state TAP FSM with a 4-bit instruction register, an 8-bit demonstration data register, and a 1-bit BYPASS path |
+| **04 — Tcl Automation** | EDA scripting | Vivado Tcl scripts that add sources, set the simulation top, launch XSim, and run the Lab 02 or Lab 03 testbench |
 
-**Vì sao 0x08?** Bit 3 bằng 1, còn q0=q1=0 nên n0=0; nếu ép n0=1, bit kết quả đổi: stuck-at-1 bị phát hiện.
+## Repository structure
 
-**Lưu ý:** Điểm lỗi được mô phỏng bằng `fault_mode` để học; không phải chứng minh FF vật lý hỏng, và không phải phép kiểm thử chuẩn sản xuất. 100% chỉ có nghĩa tìm được pattern cho **2 lỗi mô hình hóa** ở nút n0, không phải 100% fault coverage toàn mạch.
+```text
+.
+├── lab01_scan_basics/
+│   ├── rtl/scan_dff.v
+│   ├── rtl/scan_chain_8.v
+│   └── tb/tb_scan_chain_8.v
+├── lab02_scan_atpg/
+│   ├── rtl/scan_dff.v
+│   ├── rtl/scan_logic8.v
+│   ├── tb/tb_scan_logic8.v
+│   └── scripts/
+│       ├── atpg_stuck_at.py
+│       └── atpg_report.txt
+├── lab03_jtag_tap/
+│   ├── rtl/jtag_tap_demo.v
+│   └── tb/tb_jtag_tap_demo.v
+├── vivado_tcl/
+│   ├── run_lab02.tcl
+│   └── run_lab03.tcl
+├── .gitignore
+└── README.md
+```
 
-## Lab 03 — Sau khi hiểu Lab02
+## Getting started
 
-1. Tạo Vivado project mới (tránh trộn các top/testbench).
-2. Design Source: `lab03_jtag_tap/rtl/jtag_tap_demo.v`.
-3. Simulation Source: `lab03_jtag_tap/tb/tb_jtag_tap_demo.v`.
-4. Simulation Top: `tb_jtag_tap_demo`. Chạy Behavioral Simulation.
-5. Hiểu TCK (clock), TMS (FSM control), TDI (serial in), TDO (serial out).
-6. Theo dõi state chuyển IDLE -> Select-DR -> Select-IR -> Capture-IR -> Shift-IR -> Update-IR -> IDLE; sau đó Capture-DR -> Shift-DR -> Update-DR.
+**Requirements:** Vivado 2022.2 with XSim (for RTL simulation) and Python 3 (for the Lab 02 pattern-generation script). A physical FPGA board is **not** required.
 
-JTAG TAP/Boundary Scan và internal scan để kiểm thử logic là hai thứ liên quan nhưng không đồng nhất. Lab03 minh họa FSM và các thanh ghi JTAG, không có boundary-scan cells chuẩn IEEE.
+### Lab 01 — 8-bit scan chain
 
-## Lab04 — Scripting / EDA
+1. Create a new **RTL Project** in Vivado.
+2. Add `lab01_scan_basics/rtl/scan_dff.v` and `lab01_scan_basics/rtl/scan_chain_8.v` as **Design Sources**.
+3. Add `lab01_scan_basics/tb/tb_scan_chain_8.v` as a **Simulation Source**.
+4. Set `tb_scan_chain_8` as the simulation top and run **Behavioral Simulation → Run All**.
+5. Check the console and waveforms for reset, parallel capture, serial shift-in, and shift-out.
 
-- Windows PowerShell: `python .\lab02_scan_atpg\scripts\atpg_stuck_at.py`
-- Vivado Tcl Console: `source C:/DUONG_DAN/DFT_Internship_Labs/vivado_tcl/run_lab02.tcl`
-- Run Lab03 trên một Vivado project MỚI: `source C:/DUONG_DAN/DFT_Internship_Labs/vivado_tcl/run_lab03.tcl`
-- TCL chỉ chạy khi Vivado project đã mở. Đổi đường dẫn ví dụ thành đường dẫn thật. Dùng dấu `/` trên Windows.
+Expected final testbench message:
 
-## Đề xuất làm thêm
+```text
+ALL TESTS PASSED (28 state checks)
+```
 
-- Kiểm tra edge cases: all-zeros, all-ones, alternating bits.
-- Viết testbench giả lập scan stuck-at input hoặc clock stuck; mô tả rõ mô hình lỗi.
-- Mở RTL Schematic sau synthesis, giải thích flip-flop + MUX.
-- Ôn STA: setup, hold, slack, clock uncertainty; ôn CMOS inverter, static/dynamic power.
+### Lab 02 — Scan-based stuck-at fault testing and pattern generation
 
-## Minh chứng khi đưa vào CV
+1. Create a **separate** Vivado RTL project.
+2. Add `lab02_scan_atpg/rtl/scan_dff.v` and `lab02_scan_atpg/rtl/scan_logic8.v` as Design Sources.
+3. Add `lab02_scan_atpg/tb/tb_scan_logic8.v` as a Simulation Source.
+4. Set `tb_scan_logic8` as the simulation top and run **Behavioral Simulation → Run All**.
+5. Inspect `scan_en`, `scan_in`, `scan_out`, `scan_state`, `fault_mode`, and the internal `functional_next` signal.
 
-Chỉ ghi sau khi đã tự chạy mô phỏng thành công và có waveform/report. Không ghi là đã dùng Synopsys TestMAX/Design Compiler nếu chưa có kinh nghiệm thực tế.
+The testbench exercises scan loading, functional capture, scan readout, fault detection, and fault masking. Its expected final message is:
+
+```text
+ALL LAB02 TESTS PASSED (5 cases)
+```
+
+Run the Python test-pattern search from the repository root:
+
+```powershell
+python .\lab02_scan_atpg\scripts\atpg_stuck_at.py
+```
+
+The script searches all 256 possible 8-bit input states and writes `lab02_scan_atpg/scripts/atpg_report.txt`.
+
+**Modeled fault site:** `n0 = q[0] & q[1]`  
+**Propagation path:** `next[0] = (n0 ^ q[2]) & q[3]`
+
+| Modeled fault | Detecting patterns | First detecting input | Good capture | Faulty capture |
+| --- | ---: | --- | --- | --- |
+| `n0` stuck-at-0 | 32 / 256 | `0x0B` | `0x49` | `0x48` |
+| `n0` stuck-at-1 | 96 / 256 | `0x08` | `0x0A` | `0x0B` |
+
+Both **modeled** faults have at least one detecting pattern, giving **100% coverage of this two-fault model only**. This is **not** whole-circuit fault coverage. Faults are injected using an educational `fault_mode` control; no physical chip faults are measured.
+
+### Lab 03 — Educational JTAG TAP controller
+
+1. Create a new Vivado RTL project.
+2. Add `lab03_jtag_tap/rtl/jtag_tap_demo.v` as a Design Source.
+3. Add `lab03_jtag_tap/tb/tb_jtag_tap_demo.v` as a Simulation Source.
+4. Set `tb_jtag_tap_demo` as the simulation top and run Behavioral Simulation.
+5. Inspect the TAP state transitions (`TMS`/`TCK`), instruction shifting (`TDI`), and serial output (`TDO`).
+
+The model includes the 16 TAP states, an instruction register, a demonstration data register, and a BYPASS path. The testbench is designed to report:
+
+```text
+ALL LAB03 TESTS PASSED
+```
+
+**Limitation:** This module demonstrates TAP control concepts; it is not a complete IEEE 1149.1 boundary-scan implementation.
+
+### Lab 04 — Vivado Tcl automation
+
+Open a Vivado **RTL project first**, then run a script in the **Tcl Console**. Replace the example path with the actual repository location:
+
+```tcl
+source D:/Digital-IC-DFT-Design-and-Verification/vivado_tcl/run_lab02.tcl
+```
+
+For Lab 03, open a separate project and run:
+
+```tcl
+source D:/Digital-IC-DFT-Design-and-Verification/vivado_tcl/run_lab03.tcl
+```
+
+These scripts **add the RTL and testbench files, set the top modules, launch simulation, and execute `run all`**. They do **not** automatically parse all logs or generate a combined PASS/FAIL dashboard.
+
+## Verification status
+
+- [x] **Lab 01:** 8-bit scan-chain waveforms and state checks observed in Vivado XSim.
+- [x] **Lab 02 (Python):** Pattern search completed; `PYTHON MODEL CHECKS PASSED`.
+- [ ] **Lab 02 (XSim):** Confirm the full testbench PASS log and save a waveform screenshot.
+- [ ] **Lab 03 (XSim):** Confirm TAP testbench PASS and save a waveform screenshot.
+- [ ] **Lab 04 (Tcl):** Confirm scripted runs in Vivado and archive logs.
+
+Unchecked items indicate steps for which successful local execution has **not yet been documented**. Update this checklist as verification is completed.
+
+## Concepts practiced
+
+Scan-enabled flip-flops, controllability and observability, scan shift/capture, stuck-at fault activation and propagation, test-pattern generation, fault masking, JTAG TAP state transitions, RTL self-checking testbenches, and basic Tcl scripting for EDA tools.
+
+## Further work
+
+- Extend the fault list beyond one internal node and calculate coverage over a clearly defined fault universe.
+- Add regression scripts that parse simulator logs and summarize PASS/FAIL results.
+- Explore synthesis reports and introductory static timing analysis (setup, hold, slack).
